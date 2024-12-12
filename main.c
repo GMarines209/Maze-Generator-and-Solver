@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 
 #define PATHWIDTH 1
@@ -10,7 +11,6 @@
 #define CELL_PATH_W  0x08  // West path open
 #define CELL_VISITED 0x10  // Cell has been visited
 //bit is left shifted over and compared in order to rep multiple bool values in a single number
-
 
 typedef struct point{
     int x;
@@ -24,7 +24,7 @@ typedef struct maze{
     point *stack;
     int* maze;
     int visitedNodes;
-    int pathWidth;
+    //int pathWidth;
 }maze;
 
 // Push a point to the stack
@@ -49,7 +49,7 @@ void freeMaze(maze *m) {
     free(m->stack);
 }
 
-void initMaze(maze* m , int width, int height,int pathWidth){
+void initMaze(maze* m , int width, int height){
     m->mazeWidth = width;
     m->mazeHeight = height;
 
@@ -61,7 +61,12 @@ void initMaze(maze* m , int width, int height,int pathWidth){
     m->maze = (int*)calloc(width * height,sizeof(int));
 
     m->visitedNodes = 0;
-    m->pathWidth = PATHWIDTH;
+
+    if (!m->stack || !m->maze) {
+        printf("Memory allocation failed!\n");
+        exit(EXIT_FAILURE);
+    }
+    //m->pathWidth = PATHWIDTH;
 }
 
 void drawMaze(maze *m) {
@@ -78,40 +83,120 @@ void drawMaze(maze *m) {
 }
 
 void genMaze(maze *m){
+
+    int directions[4][2] = {
+        {0,-1}, //  North
+        {1,0},  //  East
+        {0,1},  //  South
+        {-1,0}  //  West
+    };
+
     //if visited less than all the nodes...
     if(m->visitedNodes < m->mazeWidth * m->mazeHeight){
-        
-        //Looking North
 
-        //if the node has one above it 
-        if(top(&m).y > 0){
-            
-            if(m->maze[(top(&m).y -1) * m->mazeWidth + (top(&m).x + 0)] & CELL_VISITED){
+        int validDirections[4];
+        int numValidDirections = 0;
+
+        //get the top(current cell) we are working with
+        point currentCell = top(m);
+        
+        //loop for each direction avialable 
+        for(int i = 0; i < 4 ; i++){
+            int newX = currentCell.x + directions[i][0];
+            int newY = currentCell.y + directions[i][1];  
+
+            //if the X & Y are in bounds            (might have to be <= width / size)
+            if (newX >= 0 && newX < m->mazeWidth && newY >= 0 && newY < m->mazeHeight) {
+                
+                //get index of the cell & if not visited
+                int cellIndex = newY * m->mazeWidth + newX;
+                if(!(m->maze[cellIndex] & CELL_VISITED)){
+                    validDirections[numValidDirections++] = i;
+                }
 
             }
         }
 
 
+        //if there are empty neighbors available
+        if(numValidDirections > 0){
+            int cellDirection = validDirections[rand() % numValidDirections];  
+
+            // get new coordinates
+            int newX = currentCell.x + directions[cellDirection][0];
+            int newY = currentCell.y + directions[cellDirection][1];
+            
+            // mark the path
+            int currentCellIndex = currentCell.y * m->mazeWidth + currentCell.x;
+            int newCellIndex = newY * m->mazeWidth + newX;
+
+            switch(cellDirection){
+                case 0: //North
+                    m->maze[currentCellIndex] |= CELL_PATH_N; 
+                    m->maze[newCellIndex] |= CELL_PATH_S;
+                    break;
+                case 1: //East
+                    m->maze[currentCellIndex] |= CELL_PATH_E;
+                    m->maze[newCellIndex] |= CELL_PATH_W;
+                    break;
+                case 2: //South
+                    m->maze[currentCellIndex] |= CELL_PATH_S;
+                    m->maze[newCellIndex] |= CELL_PATH_N;
+                    break;
+                case 3: //West
+                    m->maze[currentCellIndex] |= CELL_PATH_W;
+                    m->maze[newCellIndex] |= CELL_PATH_E;
+                    break;
+
+            }
+
+            m->maze[newCellIndex] |= CELL_VISITED;
+            push(m,newX,newY);
+            m->visitedNodes++;
+
+        }
+        else{
+            pop(m);
+        }
     }
 }
 
+void genWholeMaze(maze *m){
+    int startX = rand() % m->mazeWidth;
+    int startY = rand() % m->mazeHeight;
+    
+    m->maze[startY * m->mazeWidth + startX] |= CELL_VISITED;
+    push(m,startX,startY);
+    m->visitedNodes = 1;
+
+    while (m->visitedNodes < m->mazeWidth * m->mazeHeight) {
+        genMaze(m);
+    }
+
+}
 int main(){
+
+    srand(time(NULL));
 
     int maze_height,maze_width;
 
     //gets the length and width of the maze from the user
     printf("How large do you want the maze to be? \n\t (e.g., Length: 10 Width: 20) \n");
-    if (scanf("%d %d", &maze_height, &maze_width) != 2) {
-        printf("Invalid input. Using default 10x20 maze.\n");
+    scanf("%d %d",&maze_height, &maze_width);
+    if (maze_width < 1 || maze_width > 100 || maze_height < 1 || maze_height > 100) {
+        printf("Invalid dimensions. Using default 10x20 maze.\n");
         maze_height = 10;
         maze_width = 20;
     }
 
     //create and initilize the maze
     maze myMaze;
-    initMaze(&myMaze,maze_width, maze_height, PATHWIDTH);
+    initMaze(&myMaze,maze_width, maze_height);
 
+    genWholeMaze(&myMaze);
     drawMaze(&myMaze);
+
+    freeMaze(&myMaze);
 
     return 0;
 }
