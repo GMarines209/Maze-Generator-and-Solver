@@ -70,13 +70,34 @@ void initMaze(maze* m , int width, int height){
 }
 
 void drawMaze(maze *m) {
-    //system("cls");
-    //loop over column
+    // Draw top border
+    for (int x = 0; x < m->mazeWidth; x++) {
+        printf(" _");
+    }
+    printf("\n");
+
     for (int y = 0; y < m->mazeHeight; y++) {
-        //loop over row
+        printf("|");
         for (int x = 0; x < m->mazeWidth; x++) {
-            //A visited cell is a space, while unvisited is a # (wall)
-            printf("%c", (m->maze[y * m->mazeWidth + x] & CELL_VISITED) ? ' ' : '#');
+            int cell = m->maze[y * m->mazeWidth + x];
+            // Check south path or if it's the last row
+            if ((cell & CELL_PATH_S) || (y == m->mazeHeight - 1)) {
+                printf(" ");
+            } else {
+                printf("_");
+            }
+
+            if (x == m->mazeWidth - 1) {
+                printf("|");
+                continue;
+            }
+
+            // Check east path
+            if (cell & CELL_PATH_E) {
+                printf(" ");
+            } else {
+                printf("|");
+            }
         }
         printf("\n");
     }
@@ -181,8 +202,9 @@ int main(){
     int maze_height,maze_width;
 
     //gets the length and width of the maze from the user
-    printf("How large do you want the maze to be? \n\t (e.g., Length: 10 Width: 20) \n");
-    scanf("%d %d",&maze_height, &maze_width);
+    //gets the length and width of the maze from the user
+    printf("Enter maze height and width (e.g., 10 20): ");
+    scanf("%d %d", &maze_height, &maze_width);
     if (maze_width < 1 || maze_width > 100 || maze_height < 1 || maze_height > 100) {
         printf("Invalid dimensions. Using default 10x20 maze.\n");
         maze_height = 10;
