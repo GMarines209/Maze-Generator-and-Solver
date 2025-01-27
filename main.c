@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/stat.h>
 
 
 #define PATHWIDTH 1
@@ -233,6 +234,16 @@ int main(){
 
     srand(time(NULL));
 
+    // Create mazes directory if it doesn't exist
+    struct stat st = {0};
+    if (stat("mazes", &st) == -1) {
+        #ifdef _WIN32
+            mkdir("mazes");
+        #else
+            _mkdir("mazes", 0700);  // has read/write permissions
+        #endif
+    }
+
     int option = menu();
 
     while(option != 2){
@@ -242,7 +253,6 @@ int main(){
         case 1:
             int maze_height,maze_width;
 
-            //gets the length and width of the maze from the user
             //gets the length and width of the maze from the user
             printf("Enter maze height and width (e.g., 10 20): ");
             scanf("%d %d", &maze_height, &maze_width);
@@ -255,17 +265,23 @@ int main(){
             //create and initilize the maze
             maze myMaze;
             initMaze(&myMaze,maze_width, maze_height);
-
             genWholeMaze(&myMaze);
+
             //print maze to console
             drawMaze(&myMaze, stdout);
 
+            // Generate unique filename
+            char filename[100];
+            time_t now = time(NULL);
+            struct tm *t = localtime(&now);
+            strftime(filename, sizeof(filename), "mazes/maze_%Y%m%d_%H%M%S.txt", t);
+
             // save maze to file
-            FILE *file = fopen("maze.txt", "w");
+            FILE *file = fopen(filename, "w");
             if (file) {
                 drawMaze(&myMaze, file); // Write to file
                 fclose(file);
-                printf("\nMaze saved to maze.txt\n");
+                printf("\nMaze saved to %s\n", filename);
             } else {
                 printf("Failed to save maze to file.\n");
             }
