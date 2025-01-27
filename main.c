@@ -29,6 +29,25 @@ typedef struct maze{
     //int pathWidth;
 }maze;
 
+int menu(){
+    int choice;
+    
+  printf("\nWelcome!\n");
+  printf("What do you want to do? \n");
+  printf("1. generate new maze\n");
+  printf("2. Quit\n");
+  scanf("%d", &choice);
+  while (getchar() != '\n');
+  while (choice !=1 && choice != 2)
+  {
+    printf("Invalid choice. Try again:");
+    scanf("%d", &choice);
+    while (getchar() != '\n');
+  }
+  
+  return choice;
+}
+
 // Push a point to the stack
 void push(maze *m, int x, int y) {
     // increase top and add point to stack
@@ -214,38 +233,57 @@ int main(){
 
     srand(time(NULL));
 
-    int maze_height,maze_width;
+    int option = menu();
 
-    //gets the length and width of the maze from the user
-    //gets the length and width of the maze from the user
-    printf("Enter maze height and width (e.g., 10 20): ");
-    scanf("%d %d", &maze_height, &maze_width);
-    if (maze_width < 1 || maze_width > 100 || maze_height < 1 || maze_height > 100) {
-        printf("Invalid dimensions. Using default 10x20 maze.\n");
-        maze_height = 10;
-        maze_width = 20;
+    while(option != 2){
+
+        switch (option)
+        {
+        case 1:
+            int maze_height,maze_width;
+
+            //gets the length and width of the maze from the user
+            //gets the length and width of the maze from the user
+            printf("Enter maze height and width (e.g., 10 20): ");
+            scanf("%d %d", &maze_height, &maze_width);
+            if (maze_width < 1 || maze_width > 100 || maze_height < 1 || maze_height > 100) {
+                printf("Invalid dimensions. Using default 10x20 maze.\n");
+                maze_height = 10;
+                maze_width = 20;
+            }
+
+            //create and initilize the maze
+            maze myMaze;
+            initMaze(&myMaze,maze_width, maze_height);
+
+            genWholeMaze(&myMaze);
+            //print maze to console
+            drawMaze(&myMaze, stdout);
+
+            // save maze to file
+            FILE *file = fopen("maze.txt", "w");
+            if (file) {
+                drawMaze(&myMaze, file); // Write to file
+                fclose(file);
+                printf("\nMaze saved to maze.txt\n");
+            } else {
+                printf("Failed to save maze to file.\n");
+            }
+
+
+            freeMaze(&myMaze);
+            break;
+        case 2:
+            printf("goodbye!");
+            break;
+
+        default:
+            printf("Incorrect entry. Try again");
+            break;
+        }
+
+        option = menu();
     }
-
-    //create and initilize the maze
-    maze myMaze;
-    initMaze(&myMaze,maze_width, maze_height);
-
-    genWholeMaze(&myMaze);
-    //print maze to console
-    drawMaze(&myMaze, stdout);
-
-    // save maze to file
-    FILE *file = fopen("maze.txt", "w");
-    if (file) {
-        drawMaze(&myMaze, file); // Write to file
-        fclose(file);
-        printf("\nMaze saved to maze.txt\n");
-    } else {
-        printf("Failed to save maze to file.\n");
-    }
-
-
-    freeMaze(&myMaze);
 
     return 0;
 }
