@@ -2,7 +2,7 @@
 
 C program that generates random mazes using a depth-first search algorithm. This program features a proper Start point at the top-left corner and an exit at the bottom-right corner, which can be interchanged as you see fit!
 
-![Maze Example](https://via.placeholder.com/400x200.png?text=Maze+Example)  
+![maze screenshot](https://github.com/user-attachments/assets/567531b5-6505-4a17-aeb8-43de93751a46)
 
 ## Features
 - **Perfect Mazes**: Guarantees one unique path between any two points
