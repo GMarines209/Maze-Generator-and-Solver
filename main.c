@@ -24,6 +24,8 @@ typedef struct maze{
     point *stack;
     int* maze;
     int visitedNodes;
+    point start;
+    point end;
     //int pathWidth;
 }maze;
 
@@ -66,40 +68,39 @@ void initMaze(maze* m , int width, int height){
         printf("Memory allocation failed!\n");
         exit(EXIT_FAILURE);
     }
-    //m->pathWidth = PATHWIDTH;
+
+    m->start = (point){0,0};
+    m->end = (point){width -1, height-1};
 }
 
-void drawMaze(maze *m) {
-    // Draw top border
+void drawMaze(maze *m, FILE *output) {
+    // Draw top border with opening for start
+    fprintf(output, " "); // Left edge
     for (int x = 0; x < m->mazeWidth; x++) {
-        printf(" _");
+        int cell = m->maze[0 * m->mazeWidth + x]; // First row cells
+        if (x == m->start.x && (cell & CELL_PATH_N)) {
+            fprintf(output, "  "); // Start entrance (no wall)
+        } else if (cell & CELL_PATH_N) {
+            fprintf(output, "  "); // Open north path
+        } else {
+            fprintf(output, "_ "); // Closed north path
+        }
     }
-    printf("\n");
+    fprintf(output, "\n");
 
+     // Draw maze cells
     for (int y = 0; y < m->mazeHeight; y++) {
-        printf("|");
+        fprintf(output, "|"); // Left wall
         for (int x = 0; x < m->mazeWidth; x++) {
             int cell = m->maze[y * m->mazeWidth + x];
-            // Check south path or if it's the last row
-            if ((cell & CELL_PATH_S) || (y == m->mazeHeight - 1)) {
-                printf(" ");
-            } else {
-                printf("_");
-            }
-
-            if (x == m->mazeWidth - 1) {
-                printf("|");
-                continue;
-            }
-
-            // Check east path
-            if (cell & CELL_PATH_E) {
-                printf(" ");
-            } else {
-                printf("|");
-            }
+            
+            // Draw south wall (underscore if closed)
+            fprintf(output, "%c", (cell & CELL_PATH_S) ? ' ' : '_');
+            
+            // Draw east wall (pipe if closed)
+            fprintf(output, "%c", (cell & CELL_PATH_E) ? ' ' : '|');
         }
-        printf("\n");
+        fprintf(output, "\n");
     }
 }
 
@@ -183,6 +184,10 @@ void genMaze(maze *m){
 }
 
 void genWholeMaze(maze *m){
+    //add start and end points at Top left and Bottom right
+    m->start = (point){0,0};
+    m->end = (point){m->mazeWidth -1, m->mazeHeight-1};
+
     int startX = rand() % m->mazeWidth;
     int startY = rand() % m->mazeHeight;
     
@@ -194,7 +199,17 @@ void genWholeMaze(maze *m){
         genMaze(m);
     }
 
+    // Force open paths for start/end
+    int startIdx = m->start.y * m->mazeWidth + m->start.x;
+    int endIdx = m->end.y * m->mazeWidth + m->end.x;
+
+    // Open north path for start (top entrance)
+    m->maze[startIdx] |= CELL_PATH_N;
+    // Open south path for end (bottom exit)
+    m->maze[endIdx] |= CELL_PATH_S;
+
 }
+
 int main(){
 
     srand(time(NULL));
@@ -216,7 +231,19 @@ int main(){
     initMaze(&myMaze,maze_width, maze_height);
 
     genWholeMaze(&myMaze);
-    drawMaze(&myMaze);
+    //print maze to console
+    drawMaze(&myMaze, stdout);
+
+    // save maze to file
+    FILE *file = fopen("maze.txt", "w");
+    if (file) {
+        drawMaze(&myMaze, file); // Write to file
+        fclose(file);
+        printf("\nMaze saved to maze.txt\n");
+    } else {
+        printf("Failed to save maze to file.\n");
+    }
+
 
     freeMaze(&myMaze);
 
