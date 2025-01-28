@@ -238,9 +238,9 @@ int main(){
     struct stat st = {0};
     if (stat("mazes", &st) == -1) {
         #ifdef _WIN32
-            mkdir("mazes");
+            _mkdir("mazes");
         #else
-            _mkdir("mazes", 0700);  // has read/write permissions
+            mkdir("mazes", 0700);  // has read/write permissions
         #endif
     }
 
@@ -250,7 +250,7 @@ int main(){
 
         switch (option)
         {
-        case 1:
+        case 1: {
             int maze_height,maze_width;
 
             //gets the length and width of the maze from the user
@@ -274,7 +274,7 @@ int main(){
             char filename[100];
             time_t now = time(NULL);
             struct tm *t = localtime(&now);
-            strftime(filename, sizeof(filename), "mazes/maze_%Y%m%d_%H%M%S.txt", t);
+            strftime(filename, sizeof(filename), "mazes/maze_%Y-%m-%d_%H%M%S.txt", t);
 
             // save maze to file
             FILE *file = fopen(filename, "w");
@@ -289,6 +289,7 @@ int main(){
 
             freeMaze(&myMaze);
             break;
+        }
         case 2:
             printf("goodbye!");
             break;
