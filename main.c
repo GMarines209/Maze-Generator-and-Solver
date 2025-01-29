@@ -237,8 +237,8 @@ int main(){
     // Create mazes directory if it doesn't exist
     struct stat st = {0};
     if (stat("mazes", &st) == -1) {
-        #ifdef _WIN32
-            _mkdir("mazes");
+        #ifdef _WIN32 
+            mkdir("created mazes"); //_mkdir wont work
         #else
             mkdir("mazes", 0700);  // has read/write permissions
         #endif
